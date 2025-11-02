@@ -71,11 +71,15 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Modo escuro")
-                Switch(checked = isDarkTheme, onCheckedChange = onThemeChange)
+                Switch(
+                    checked = isDarkTheme,
+                    onCheckedChange = onThemeChange
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun SoundOptionCard(

@@ -12,11 +12,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.montanhajr.petclicker.data.UserPreferences
 import com.montanhajr.petclicker.ui.theme.PetClickerTheme
+import com.montanhajr.petclicker.viewmodel.MainViewModel
+import com.montanhajr.petclicker.viewmodel.MainViewModelFactory
+import com.montanhajr.petclicker.viewmodel.SettingsViewModel
+import com.montanhajr.petclicker.viewmodel.SettingsViewModelFactory
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -34,31 +39,24 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val userPreferences = remember { UserPreferences(this) }
-
-            val isDarkTheme by userPreferences.darkThemeFlow.collectAsState(initial = false)
-            val selectedSound by userPreferences.selectedSoundFlow.collectAsState(
-                initial = R.raw.clicker1
-            )
-
-            PetClickerTheme(darkTheme = isDarkTheme) {
-                PetClickerApp(
-                    userPreferences = userPreferences,
-                    isDarkTheme = isDarkTheme,
-                    selectedSound = selectedSound
-                )
-            }
+            PetClickerApp(userPreferences)
         }
     }
 }
 
 @Composable
-fun PetClickerApp(
-    userPreferences: UserPreferences,
-    isDarkTheme: Boolean,
-    selectedSound: Int
-) {
+fun PetClickerApp(userPreferences: UserPreferences) {
     val navController = rememberNavController()
-    val scope = rememberCoroutineScope()
+
+    val mainViewModel: MainViewModel = viewModel(
+        factory = MainViewModelFactory(userPreferences)
+    )
+    val viewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(userPreferences)
+    )
+
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val selectedSound by mainViewModel.selectedSound.collectAsState()
 
     PetClickerTheme(darkTheme = isDarkTheme) {
         NavHost(
@@ -69,23 +67,15 @@ fun PetClickerApp(
             composable(AppDestinations.MAIN_SCREEN) {
                 MainScreen(
                     navController = navController,
-                    defaultSound = selectedSound
+                    selectedSound = selectedSound
                 )
             }
             composable(AppDestinations.SETTINGS_SCREEN) {
                 SettingsScreen(
                     navController = navController,
                     isDarkTheme = isDarkTheme,
-                    onThemeChange = { isDark ->
-                        scope.launch {
-                            userPreferences.saveDarkTheme(isDark)
-                        }
-                    },
-                    onSoundSelected = { soundResId ->
-                        scope.launch {
-                            userPreferences.saveSelectedSound(soundResId)
-                        }
-                    }
+                    onThemeChange = { viewModel.updateTheme(it) },
+                    onSoundSelected = { viewModel.updateSound(it) }
                 )
             }
         }

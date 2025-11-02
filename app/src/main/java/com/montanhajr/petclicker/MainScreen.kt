@@ -1,10 +1,7 @@
 package com.montanhajr.petclicker
 
-import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioManager
 import android.media.SoundPool
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,35 +19,22 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.montanhajr.petclicker.ui.theme.PetClickerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    defaultSound: Int = R.raw.clicker1
+    selectedSound: Int
 ) {
     val context = LocalContext.current
-    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-    val soundOptionState = remember { mutableIntStateOf(defaultSound) }
-
-    LaunchedEffect(savedStateHandle) {
-        savedStateHandle?.getStateFlow("selectedSound", defaultSound)?.collect { newSound ->
-            soundOptionState.intValue = newSound
-        }
-    }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-
     val imageColor = if (isPressed) Color.Red else Color.Gray
 
-    // Configuração do SoundPool
     val soundPool = remember {
         SoundPool.Builder()
             .setMaxStreams(1)
@@ -66,27 +50,20 @@ fun MainScreen(
     var soundId by remember { mutableStateOf<Int?>(null) }
     var soundLoaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(soundOptionState.intValue) {
+    LaunchedEffect(selectedSound) {
         soundId?.let { soundPool.unload(it) }
-
         soundLoaded = false
-        val newSoundId = soundPool.load(context, soundOptionState.intValue, 1)
+        val newSoundId = soundPool.load(context, selectedSound, 1)
         soundPool.setOnLoadCompleteListener { _, sampleId, status ->
             if (status == 0 && sampleId == newSoundId) {
                 soundId = sampleId
                 soundLoaded = true
-                Log.d("SoundPool", "Som carregado com sucesso (ID: $sampleId)")
-            } else if (status != 0) {
-                Log.e("SoundPool", "Erro ao carregar som, status: $status")
             }
         }
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            soundPool.release()
-            Log.d("SoundPool", "SoundPool liberado")
-        }
+        onDispose { soundPool.release() }
     }
 
     Scaffold(
@@ -127,23 +104,11 @@ fun MainScreen(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        Log.d("PetClicker", "Pet clicado!")
                         if (soundLoaded && soundId != null) {
                             soundPool.play(soundId!!, 1f, 1f, 1, 0, 1f)
-                            Log.d("SoundPool", "Som reproduzido (ID: $soundId)")
-                        } else {
-                            Log.d("SoundPool", "Som ainda não carregado.")
                         }
                     }
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview() {
-    PetClickerTheme {
-        MainScreen(navController = rememberNavController())
     }
 }

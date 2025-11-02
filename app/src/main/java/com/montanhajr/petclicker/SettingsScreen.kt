@@ -5,13 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -19,7 +19,11 @@ import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(
+    navController: NavController,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -83,6 +87,22 @@ fun SettingsScreen(navController: NavController) {
                     navController.navigateUp()
                 }
             )
+
+            HorizontalDivider(Modifier.padding(start = 48.dp, end = 48.dp, top = 24.dp))
+
+            Text("Aparência", style = MaterialTheme.typography.titleMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Modo escuro")
+                Switch(
+                    checked = isDarkTheme,
+                    onCheckedChange = onThemeChange
+                )
+            }
+
         }
     }
 }
@@ -90,7 +110,7 @@ fun SettingsScreen(navController: NavController) {
 @Composable
 fun SoundOptionCard(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     onClick: () -> Unit
 ) {
     ElevatedCard(
@@ -121,10 +141,4 @@ fun SoundOptionCard(
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingPreview() {
-    SettingsScreen(navController = rememberNavController())
 }

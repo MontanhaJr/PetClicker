@@ -12,17 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    onSoundSelected: (Int) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -39,7 +38,6 @@ fun SettingsScreen(
             )
         }
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -49,46 +47,22 @@ fun SettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Escolha o som do clique",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text("Escolha o som do clique", style = MaterialTheme.typography.titleMedium)
 
-            SoundOptionCard(
-                title = "Som 1",
-                icon = Icons.Filled.MusicNote,
-                onClick = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("selectedSound", R.raw.clicker1)
-                    navController.navigateUp()
-                }
-            )
+            SoundOptionCard("Som 1", Icons.Filled.MusicNote) {
+                onSoundSelected(R.raw.clicker1)
+                navController.navigateUp()
+            }
+            SoundOptionCard("Som 2", Icons.Filled.MusicNote) {
+                onSoundSelected(R.raw.clicker2)
+                navController.navigateUp()
+            }
+            SoundOptionCard("Som 3", Icons.Filled.MusicNote) {
+                onSoundSelected(R.raw.clicker3)
+                navController.navigateUp()
+            }
 
-            SoundOptionCard(
-                title = "Som 2",
-                icon = Icons.Filled.MusicNote,
-                onClick = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("selectedSound", R.raw.clicker2)
-                    navController.navigateUp()
-                }
-            )
-
-            SoundOptionCard(
-                title = "Som 3",
-                icon = Icons.Filled.MusicNote,
-                onClick = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("selectedSound", R.raw.clicker3)
-                    navController.navigateUp()
-                }
-            )
-
-            HorizontalDivider(Modifier.padding(start = 48.dp, end = 48.dp, top = 24.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 48.dp, vertical = 24.dp))
 
             Text("Aparência", style = MaterialTheme.typography.titleMedium)
             Row(
@@ -97,12 +71,8 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Modo escuro")
-                Switch(
-                    checked = isDarkTheme,
-                    onCheckedChange = onThemeChange
-                )
+                Switch(checked = isDarkTheme, onCheckedChange = onThemeChange)
             }
-
         }
     }
 }

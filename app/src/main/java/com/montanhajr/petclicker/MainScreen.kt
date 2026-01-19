@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
@@ -77,12 +78,15 @@ fun MainScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Settings,
-                            contentDescription = "Configurações",
+                            contentDescription = stringResource(R.string.settings_icon_content_description),
                             modifier = Modifier.size(48.dp)
                         )
                     }
                 }
             )
+        },
+        bottomBar = {
+            AdBanner()
         }
     ) { innerPadding ->
         Column(
@@ -94,7 +98,7 @@ fun MainScreen(
         ) {
             Image(
                 painter = painterResource(R.drawable.dogclicker),
-                contentDescription = "Dog Clicker",
+                contentDescription = stringResource(R.string.dog_clicker_image_content_description),
                 colorFilter = ColorFilter.tint(imageColor),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

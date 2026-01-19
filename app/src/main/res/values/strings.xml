@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">PetClicker</string>
+
+    ## Main
+    <string name="settings_icon_content_description">Configurações</string>
+    <string name="dog_clicker_image_content_description">Clique para emitir o som</string>
+
+    ## Settings
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back_button_content_description">Voltar</string>
+    <string name="choose_sound_title">Escolha o som do clique</string>
+    <string name="sound_option_one_card_title">Som 1</string>
+    <string name="sound_option_two_card_title">Som 2</string>
+    <string name="sound_option_three_card_title">Som 3</string>
+    <string name="appearance_title">Aparência</string>
+    <string name="dark_mode_switch">Modo escuro</string>
+
 </resources>

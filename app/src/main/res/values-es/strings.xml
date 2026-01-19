@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PetClicker</string>
+
+    ## Main
+    <string name="settings_icon_content_description">Ajustes</string>
+    <string name="dog_clicker_image_content_description">Haz clic para emitir el sonido</string>
+
+    ## Settings
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_back_button_content_description">Atrás</string>
+    <string name="choose_sound_title">Elige el sonido del clic</string>
+    <string name="sound_option_one_card_title">Sonido 1</string>
+    <string name="sound_option_two_card_title">Sonido 2</string>
+    <string name="sound_option_three_card_title">Sonido 3</string>
+    <string name="appearance_title">Apariencia</string>
+    <string name="dark_mode_switch">Modo oscuro</string>
+
+</resources>

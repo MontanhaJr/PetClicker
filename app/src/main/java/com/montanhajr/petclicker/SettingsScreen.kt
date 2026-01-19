@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
@@ -26,12 +27,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Configurações", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.settings_back_button_content_description)
                         )
                     }
                 }
@@ -47,30 +48,30 @@ fun SettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Escolha o som do clique", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.choose_sound_title), style = MaterialTheme.typography.titleMedium)
 
-            SoundOptionCard("Som 1", Icons.Filled.MusicNote) {
+            SoundOptionCard(stringResource(R.string.sound_option_one_card_title), Icons.Filled.MusicNote) {
                 onSoundSelected(R.raw.clicker1)
                 navController.navigateUp()
             }
-            SoundOptionCard("Som 2", Icons.Filled.MusicNote) {
+            SoundOptionCard(stringResource(R.string.sound_option_two_card_title), Icons.Filled.MusicNote) {
                 onSoundSelected(R.raw.clicker2)
                 navController.navigateUp()
             }
-            SoundOptionCard("Som 3", Icons.Filled.MusicNote) {
+            SoundOptionCard(stringResource(R.string.sound_option_three_card_title), Icons.Filled.MusicNote) {
                 onSoundSelected(R.raw.clicker3)
                 navController.navigateUp()
             }
 
             HorizontalDivider(Modifier.padding(horizontal = 48.dp, vertical = 24.dp))
 
-            Text("Aparência", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.appearance_title), style = MaterialTheme.typography.titleMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Modo escuro")
+                Text(stringResource(R.string.dark_mode_switch))
                 Switch(
                     checked = isDarkTheme,
                     onCheckedChange = onThemeChange

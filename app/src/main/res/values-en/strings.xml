@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PetClicker</string>
+
+    ## Main
+    <string name="settings_icon_content_description">Settings</string>
+    <string name="dog_clicker_image_content_description">Click to make the sound</string>
+
+    ## Settings
+    <string name="settings_title">Settings</string>
+    <string name="settings_back_button_content_description">Back</string>
+    <string name="choose_sound_title">Choose the click sound</string>
+    <string name="sound_option_one_card_title">Sound 1</string>
+    <string name="sound_option_two_card_title">Sound 2</string>
+    <string name="sound_option_three_card_title">Sound 3</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="dark_mode_switch">Dark mode</string>
+
+</resources>

@@ -1,8 +1,17 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.serialization)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
 }
 
 android {
@@ -13,15 +22,26 @@ android {
         applicationId = "com.montanhajr.petclicker"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.2.0"
+        versionCode = 8
+        versionName = "1.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+        }
         release {
             isMinifyEnabled = false
+
+            val releaseAppId = localProperties.getProperty("ADMOB_RELEASE_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+            val releaseBannerId = localProperties.getProperty("ADMOB_RELEASE_BANNER_UNIT_ID") ?: "ca-app-pub-3940256099942544/6300978111"
+            
+            manifestPlaceholders["admobAppId"] = releaseAppId
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"$releaseBannerId\"")
+            
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -55,6 +76,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.google.play.services.ads)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -10,24 +10,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.MobileAds
 import com.montanhajr.petclicker.data.UserPreferences
 import com.montanhajr.petclicker.ui.theme.PetClickerTheme
 import com.montanhajr.petclicker.viewmodel.MainViewModel
 import com.montanhajr.petclicker.viewmodel.MainViewModelFactory
 import com.montanhajr.petclicker.viewmodel.SettingsViewModel
 import com.montanhajr.petclicker.viewmodel.SettingsViewModelFactory
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Inicializa o SDK do Mobile Ads
+        MobileAds.initialize(this) {}
 
         try {
             val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager

@@ -1,10 +1,13 @@
 package com.montanhajr.petclicker
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +24,7 @@ import androidx.navigation.NavController
 fun SettingsScreen(
     navController: NavController,
     isDarkTheme: Boolean,
+    selectedSound: Int,
     onThemeChange: (Boolean) -> Unit,
     onSoundSelected: (Int) -> Unit
 ) {
@@ -50,17 +54,20 @@ fun SettingsScreen(
         ) {
             Text(stringResource(R.string.choose_sound_title), style = MaterialTheme.typography.titleMedium)
 
-            SoundOptionCard(stringResource(R.string.sound_option_one_card_title), Icons.Filled.MusicNote) {
-                onSoundSelected(R.raw.clicker1)
-                navController.navigateUp()
-            }
-            SoundOptionCard(stringResource(R.string.sound_option_two_card_title), Icons.Filled.MusicNote) {
-                onSoundSelected(R.raw.clicker2)
-                navController.navigateUp()
-            }
-            SoundOptionCard(stringResource(R.string.sound_option_three_card_title), Icons.Filled.MusicNote) {
-                onSoundSelected(R.raw.clicker3)
-                navController.navigateUp()
+            val sounds = listOf(
+                Triple(stringResource(R.string.sound_option_one_card_title), Icons.Filled.MusicNote, R.raw.clicker1),
+                Triple(stringResource(R.string.sound_option_two_card_title), Icons.Filled.MusicNote, R.raw.clicker2),
+                Triple(stringResource(R.string.sound_option_three_card_title), Icons.Filled.MusicNote, R.raw.clicker3)
+            )
+
+            sounds.forEach { (title, icon, soundRes) ->
+                SoundOptionCard(
+                    title = title,
+                    icon = icon,
+                    isSelected = selectedSound == soundRes
+                ) {
+                    onSoundSelected(soundRes)
+                }
             }
 
             HorizontalDivider(Modifier.padding(horizontal = 48.dp, vertical = 24.dp))
@@ -86,16 +93,27 @@ fun SettingsScreen(
 fun SoundOptionCard(
     title: String,
     icon: ImageVector,
+    isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val shape = MaterialTheme.shapes.large
+
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(70.dp)
-            .clip(MaterialTheme.shapes.large)
+            .then(
+                if (isSelected) Modifier.border(
+                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                    shape
+                ) else Modifier
+            )
+            .clip(shape)
             .clickable { onClick() },
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isSelected) 8.dp else 2.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -105,14 +123,14 @@ fun SoundOptionCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(
-                imageVector = icon,
+                imageVector = if (isSelected) Icons.Filled.Check else icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
             )
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
             )
         }
     }

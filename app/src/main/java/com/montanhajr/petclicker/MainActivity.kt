@@ -77,7 +77,8 @@ fun PetClickerApp(userPreferences: UserPreferences) {
                     navController = navController,
                     isDarkTheme = isDarkTheme,
                     onThemeChange = { viewModel.updateTheme(it) },
-                    onSoundSelected = { viewModel.updateSound(it) }
+                    onSoundSelected = { viewModel.updateSound(it) },
+                    selectedSound = selectedSound
                 )
             }
         }

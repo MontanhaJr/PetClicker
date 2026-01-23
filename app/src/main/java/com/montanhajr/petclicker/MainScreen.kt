@@ -86,7 +86,7 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            AdBanner()
+            AdBanner(modifier = Modifier.navigationBarsPadding())
         }
     ) { innerPadding ->
         Column(

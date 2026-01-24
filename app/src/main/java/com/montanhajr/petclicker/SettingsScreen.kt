@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,7 +27,8 @@ fun SettingsScreen(
     isDarkTheme: Boolean,
     selectedSound: Int,
     onThemeChange: (Boolean) -> Unit,
-    onSoundSelected: (Int) -> Unit
+    onSoundSelected: (Int) -> Unit,
+    showRewardedAd: (() -> Unit) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -61,12 +63,21 @@ fun SettingsScreen(
             )
 
             sounds.forEach { (title, icon, soundRes) ->
+                val isPremium = soundRes == R.raw.clicker3
+                
                 SoundOptionCard(
                     title = title,
                     icon = icon,
-                    isSelected = selectedSound == soundRes
+                    isSelected = selectedSound == soundRes,
+                    isPremium = isPremium && selectedSound != soundRes
                 ) {
-                    onSoundSelected(soundRes)
+                    if (isPremium && selectedSound != soundRes) {
+                        showRewardedAd {
+                            onSoundSelected(soundRes)
+                        }
+                    } else {
+                        onSoundSelected(soundRes)
+                    }
                 }
             }
 
@@ -94,6 +105,7 @@ fun SoundOptionCard(
     title: String,
     icon: ImageVector,
     isSelected: Boolean,
+    isPremium: Boolean = false,
     onClick: () -> Unit
 ) {
     val shape = MaterialTheme.shapes.large
@@ -127,11 +139,29 @@ fun SoundOptionCard(
                 contentDescription = null,
                 tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
             )
+            
             Text(
                 text = title,
                 style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
+
+            if (isPremium) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "AD",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.WorkspacePremium,
+                        contentDescription = "Premium",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
     }
 }

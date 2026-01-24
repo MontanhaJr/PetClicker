@@ -4,6 +4,10 @@
     ## Main
     <string name="settings_icon_content_description">Configurações</string>
     <string name="dog_clicker_image_content_description">Clique para emitir o som</string>
+    <plurals name="ad_announcement">
+        <item quantity="one">Anúncio em %1$d clique</item>
+        <item quantity="other">Anúncio em %1$d cliques</item>
+    </plurals>
 
     ## Settings
     <string name="settings_title">Configurações</string>
@@ -14,5 +18,6 @@
     <string name="sound_option_three_card_title">Som 3</string>
     <string name="appearance_title">Aparência</string>
     <string name="dark_mode_switch">Modo escuro</string>
+    <string name="rewardedAdLoading">Carregando…</string>
 
 </resources>

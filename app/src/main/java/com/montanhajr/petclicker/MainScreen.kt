@@ -19,16 +19,21 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+
+private const val CLICKS_UNTIL_AD = 10
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    selectedSound: Int
+    selectedSound: Int,
+    showInterstitialAd: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -50,6 +55,9 @@ fun MainScreen(
 
     var soundId by remember { mutableStateOf<Int?>(null) }
     var soundLoaded by remember { mutableStateOf(false) }
+    
+    // Contador de cliques para o anúncio intersticial
+    var clickCount by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(selectedSound) {
         soundId?.let { soundPool.unload(it) }
@@ -111,8 +119,30 @@ fun MainScreen(
                         if (soundLoaded && soundId != null) {
                             soundPool.play(soundId!!, 1f, 1f, 1, 0, 1f)
                         }
+                        
+                        // Lógica do contador de cliques
+                        clickCount++
+                        if (clickCount >= CLICKS_UNTIL_AD) {
+                            showInterstitialAd()
+                            clickCount = 0
+                        }
                     }
             )
+
+            // Mensagem de aviso sobre o anúncio (aparece quando faltam 5 ou menos cliques)
+            val clicksRemaining = CLICKS_UNTIL_AD - clickCount
+            if (clicksRemaining <= 5) {
+                Text(
+                    text = pluralStringResource(R.plurals.ad_announcement, clicksRemaining, clicksRemaining),
+                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            } else {
+                // Espaço vazio para manter o layout estável
+                Spacer(modifier = Modifier.height(30.dp))
+            }
         }
     }
 }

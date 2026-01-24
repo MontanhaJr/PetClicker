@@ -6,12 +6,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -129,28 +133,31 @@ fun PetClickerApp(
     val selectedSound by mainViewModel.selectedSound.collectAsState()
 
     PetClickerTheme(darkTheme = isDarkTheme) {
-        NavHost(
-            navController = navController,
-            startDestination = AppDestinations.MAIN_SCREEN,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            composable(AppDestinations.MAIN_SCREEN) {
-                MainScreen(
-                    navController = navController,
-                    selectedSound = selectedSound,
-                    showInterstitialAd = showInterstitialAd
-                )
+        Column(modifier = Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = AppDestinations.MAIN_SCREEN,
+                modifier = Modifier.weight(1f)
+            ) {
+                composable(AppDestinations.MAIN_SCREEN) {
+                    MainScreen(
+                        navController = navController,
+                        selectedSound = selectedSound,
+                        showInterstitialAd = showInterstitialAd
+                    )
+                }
+                composable(AppDestinations.SETTINGS_SCREEN) {
+                    SettingsScreen(
+                        navController = navController,
+                        isDarkTheme = isDarkTheme,
+                        selectedSound = selectedSound,
+                        onThemeChange = { viewModel.updateTheme(it) },
+                        onSoundSelected = { viewModel.updateSound(it) },
+                        showRewardedAd = showRewardedAd
+                    )
+                }
             }
-            composable(AppDestinations.SETTINGS_SCREEN) {
-                SettingsScreen(
-                    navController = navController,
-                    isDarkTheme = isDarkTheme,
-                    selectedSound = selectedSound,
-                    onThemeChange = { viewModel.updateTheme(it) },
-                    onSoundSelected = { viewModel.updateSound(it) },
-                    showRewardedAd = showRewardedAd
-                )
-            }
+            AdBanner(modifier = Modifier.navigationBarsPadding())
         }
     }
 }

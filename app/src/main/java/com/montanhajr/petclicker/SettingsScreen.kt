@@ -1,5 +1,6 @@
 package com.montanhajr.petclicker
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +13,10 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,12 +35,23 @@ fun SettingsScreen(
     onSoundSelected: (Int) -> Unit,
     showRewardedAd: (() -> Unit) -> Unit
 ) {
+    var isNavigationInProgress by remember { mutableStateOf(false) }
+
+    val handleBack = {
+        if (!isNavigationInProgress) {
+            isNavigationInProgress = true
+            navController.navigateUp()
+        }
+    }
+
+    BackHandler(enabled = !isNavigationInProgress) { handleBack() }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { handleBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button_content_description)
@@ -67,6 +83,7 @@ fun SettingsScreen(
                 
                 SoundOptionCard(
                     title = title,
+                    isEnable = !isNavigationInProgress,
                     icon = icon,
                     isSelected = selectedSound == soundRes,
                     isPremium = isPremium && selectedSound != soundRes
@@ -103,6 +120,7 @@ fun SettingsScreen(
 @Composable
 fun SoundOptionCard(
     title: String,
+    isEnable: Boolean,
     icon: ImageVector,
     isSelected: Boolean,
     isPremium: Boolean = false,
@@ -121,7 +139,7 @@ fun SoundOptionCard(
                 ) else Modifier
             )
             .clip(shape)
-            .clickable { onClick() },
+            .clickable { if (isEnable) onClick() },
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isSelected) 8.dp else 2.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface

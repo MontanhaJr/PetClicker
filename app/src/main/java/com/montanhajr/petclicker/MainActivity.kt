@@ -1,7 +1,14 @@
 package com.montanhajr.petclicker
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,18 +16,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media.VolumeProviderCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -33,31 +42,46 @@ import com.montanhajr.petclicker.viewmodel.MainViewModel
 import com.montanhajr.petclicker.viewmodel.MainViewModelFactory
 import com.montanhajr.petclicker.viewmodel.SettingsViewModel
 import com.montanhajr.petclicker.viewmodel.SettingsViewModelFactory
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
+    private lateinit var soundManager: SoundManager
+    private var mediaSession: MediaSessionCompat? = null
+    private var volumeProvider: VolumeProviderCompat? = null
+    
+    private var originalVolume: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        soundManager = SoundManager(this)
+        setupMediaSession()
+
         MobileAds.initialize(this) {}
         loadRewardedAd()
         loadInterstitialAd()
 
-        try {
-            val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        volumeControlStream = AudioManager.STREAM_MUSIC
 
         setContent {
             val userPreferences = remember { UserPreferences(this) }
+            
+            val mainViewModel: MainViewModel = viewModel(
+                factory = MainViewModelFactory(userPreferences)
+            )
+            val selectedSound by mainViewModel.selectedSound.collectAsState()
+
+            LaunchedEffect(selectedSound) {
+                soundManager.loadSound(selectedSound)
+            }
+
             PetClickerApp(
                 userPreferences = userPreferences,
+                mainViewModel = mainViewModel,
+                onPlaySound = { soundManager.playSound() },
                 showRewardedAd = { onRewardEarned ->
                     showRewardedAd(onRewardEarned)
                 },
@@ -66,6 +90,69 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
+    }
+
+    private fun setupMediaSession() {
+        mediaSession = MediaSessionCompat(this, "PetClicker").apply {
+            volumeProvider = object : VolumeProviderCompat(
+                VOLUME_CONTROL_RELATIVE,
+                100,
+                50
+            ) {
+                override fun onAdjustVolume(direction: Int) {
+                    if (direction != 0) {
+                        soundManager.playSound()
+                    }
+                }
+            }
+            
+            val state = PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PAUSE)
+                .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
+                .build()
+            setPlaybackState(state)
+            isActive = true
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Quando o app volta para o primeiro plano, usamos o volume LOCAL (nativo)
+        mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Quando o app vai para segundo plano ou a tela bloqueia, usamos o volume REMOTE
+        // Isso permite capturar os botões de volume sem mostrar a barra de volume do sistema
+        volumeProvider?.let {
+            mediaSession?.setPlaybackToRemote(it)
+        }
+    }
+
+    private fun adjustMediaVolume(reduce: Boolean) {
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        
+        if (reduce) {
+            originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val targetVolume = (maxVolume * 0.3f).roundToInt()
+            if (originalVolume > targetVolume) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+            }
+        } else if (originalVolume != -1) {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
+            originalVolume = -1
+        }
+    }
+
+    // Removido o override de onKeyDown que interceptava os botões de volume,
+    // permitindo que o sistema os trate nativamente enquanto o app está aberto.
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
+        mediaSession?.release()
     }
 
     private fun loadRewardedAd() {
@@ -81,12 +168,26 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showRewardedAd(onRewardEarned: () -> Unit) {
-        if (rewardedAd != null) {
-            rewardedAd?.show(this) {
-                onRewardEarned()
-                loadRewardedAd()
+        rewardedAd?.let { ad ->
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdShowedFullScreenContent() {
+                    adjustMediaVolume(reduce = true)
+                }
+                override fun onAdDismissedFullScreenContent() {
+                    adjustMediaVolume(reduce = false)
+                    rewardedAd = null
+                    loadRewardedAd()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    adjustMediaVolume(reduce = false)
+                    rewardedAd = null
+                    loadRewardedAd()
+                }
             }
-        } else {
+            ad.show(this) {
+                onRewardEarned()
+            }
+        } ?: run {
             Toast.makeText(this, getString(R.string.rewardedAdLoading), Toast.LENGTH_SHORT).show()
             loadRewardedAd()
         }
@@ -105,10 +206,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showInterstitialAd() {
-        if (interstitialAd != null) {
-            interstitialAd?.show(this)
-            loadInterstitialAd() // Carrega o próximo após exibir
-        } else {
+        interstitialAd?.let { ad ->
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdShowedFullScreenContent() {
+                    adjustMediaVolume(reduce = true)
+                }
+                override fun onAdDismissedFullScreenContent() {
+                    adjustMediaVolume(reduce = false)
+                    interstitialAd = null
+                    loadInterstitialAd()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    adjustMediaVolume(reduce = false)
+                    interstitialAd = null
+                    loadInterstitialAd()
+                }
+            }
+            ad.show(this)
+        } ?: run {
             loadInterstitialAd()
         }
     }
@@ -117,14 +232,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PetClickerApp(
     userPreferences: UserPreferences,
+    mainViewModel: MainViewModel,
+    onPlaySound: () -> Unit,
     showRewardedAd: (() -> Unit) -> Unit,
     showInterstitialAd: () -> Unit
 ) {
     val navController = rememberNavController()
 
-    val mainViewModel: MainViewModel = viewModel(
-        factory = MainViewModelFactory(userPreferences)
-    )
     val viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModelFactory(userPreferences)
     )
@@ -142,7 +256,7 @@ fun PetClickerApp(
                 composable(AppDestinations.MAIN_SCREEN) {
                     MainScreen(
                         navController = navController,
-                        selectedSound = selectedSound,
+                        onPlaySound = onPlaySound,
                         showInterstitialAd = showInterstitialAd
                     )
                 }

@@ -1,7 +1,5 @@
 package com.montanhajr.petclicker
 
-import android.media.AudioAttributes
-import android.media.SoundPool
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,7 +15,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -32,48 +29,15 @@ private const val CLICKS_UNTIL_AD = 10
 fun MainScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    selectedSound: Int,
+    onPlaySound: () -> Unit,
     showInterstitialAd: () -> Unit
 ) {
-    val context = LocalContext.current
-
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val imageColor = if (isPressed) Color.Red else Color.Gray
 
-    val soundPool = remember {
-        SoundPool.Builder()
-            .setMaxStreams(1)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            .build()
-    }
-
-    var soundId by remember { mutableStateOf<Int?>(null) }
-    var soundLoaded by remember { mutableStateOf(false) }
-    
     // Contador de cliques para o anúncio intersticial
     var clickCount by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(selectedSound) {
-        soundId?.let { soundPool.unload(it) }
-        soundLoaded = false
-        val newSoundId = soundPool.load(context, selectedSound, 1)
-        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0 && sampleId == newSoundId) {
-                soundId = sampleId
-                soundLoaded = true
-            }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { soundPool.release() }
-    }
 
     Scaffold(
         topBar = {
@@ -113,9 +77,7 @@ fun MainScreen(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        if (soundLoaded && soundId != null) {
-                            soundPool.play(soundId!!, 1f, 1f, 1, 0, 1f)
-                        }
+                        onPlaySound()
                         
                         // Lógica do contador de cliques
                         clickCount++

@@ -6,10 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PhonelinkLock
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -31,11 +34,14 @@ fun SettingsScreen(
     navController: NavController,
     isDarkTheme: Boolean,
     selectedSound: Int,
+    isLockScreenFeatureEnabled: Boolean,
     onThemeChange: (Boolean) -> Unit,
     onSoundSelected: (Int) -> Unit,
+    onLockScreenFeatureToggle: () -> Unit,
     showRewardedAd: (() -> Unit) -> Unit
 ) {
     var isNavigationInProgress by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     val handleBack = {
         if (!isNavigationInProgress) {
@@ -59,14 +65,17 @@ fun SettingsScreen(
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp),
+                .padding(top = innerPadding.calculateTopPadding())
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp)
+                .padding(bottom = innerPadding.calculateBottomPadding() + 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -98,7 +107,25 @@ fun SettingsScreen(
                 }
             }
 
-            HorizontalDivider(Modifier.padding(horizontal = 48.dp, vertical = 24.dp))
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            Text(stringResource(R.string.features_title), style = MaterialTheme.typography.titleMedium)
+            
+            SoundOptionCard(
+                title = stringResource(R.string.lock_screen_feature_title),
+                isEnable = !isNavigationInProgress && !isLockScreenFeatureEnabled,
+                icon = Icons.Filled.PhonelinkLock,
+                isSelected = isLockScreenFeatureEnabled,
+                isPremium = !isLockScreenFeatureEnabled
+            ) {
+                if (!isLockScreenFeatureEnabled) {
+                    showRewardedAd {
+                        onLockScreenFeatureToggle()
+                    }
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(horizontal = 48.dp, vertical = 12.dp))
 
             Text(stringResource(R.string.appearance_title), style = MaterialTheme.typography.titleMedium)
             Row(

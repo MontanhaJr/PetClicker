@@ -19,6 +19,9 @@ class SettingsViewModel(
     private val _selectedSound = MutableStateFlow(com.montanhajr.petclicker.R.raw.clicker1)
     val selectedSound: StateFlow<Int> = _selectedSound.asStateFlow()
 
+    private val _isLockScreenFeatureEnabled = MutableStateFlow(false)
+    val isLockScreenFeatureEnabled: StateFlow<Boolean> = _isLockScreenFeatureEnabled.asStateFlow()
+
     init {
         viewModelScope.launch {
             userPreferences.darkThemeFlow.collectLatest { _isDarkTheme.value = it }
@@ -40,5 +43,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             userPreferences.saveSelectedSound(soundResId)
         }
+    }
+
+    fun enableLockScreenFeature(enabled: Boolean) {
+        _isLockScreenFeatureEnabled.value = enabled
     }
 }

@@ -19,5 +19,15 @@
     <string name="appearance_title">Aparência</string>
     <string name="dark_mode_switch">Modo escuro</string>
     <string name="rewardedAdLoading">Carregando…</string>
+    <string name="lock_screen_feature_title">Ativar som com tela bloqueada</string>
+    <string name="features_title">Recursos extras</string>
+    <string name="lock_screen_feature_activated_toast">Feature ativada! Você pode bloquear a tela agora.</string>
+
+    ## Volume Feature Info Dialog
+    <string name="volume_feature_dialog_title">Clique com a Tela Bloqueada</string>
+    <string name="volume_feature_dialog_description">Agora, se você bloquear a tela, poderá continuar clicando!</string>
+    <string name="volume_feature_dialog_how_it_works_title">Como funciona:</string>
+    <string name="volume_feature_dialog_how_it_works_steps">• Bloqueie a tela do celular.\n• Use os botões de volume (+ ou -).\n• O app emitirá o som de clique!</string>
+    <string name="volume_feature_dialog_button">ENTENDI, VAMOS CLICAR!</string>
 
 </resources>

@@ -20,5 +20,15 @@
     <string name="appearance_title">Appearance</string>
     <string name="dark_mode_switch">Dark mode</string>
     <string name="rewardedAdLoading">Loading…</string>
+    <string name="lock_screen_feature_title">Enable sound with locked screen</string>
+    <string name="features_title">Extra Features</string>
+    <string name="lock_screen_feature_activated_toast">Feature enabled! You can lock the screen now.</string>
+
+    ## Volume Feature Info Dialog
+    <string name="volume_feature_dialog_title">Locked Screen Clicker</string>
+    <string name="volume_feature_dialog_description">Now, if you lock the screen, you can keep clicking!</string>
+    <string name="volume_feature_dialog_how_it_works_title">How it works:</string>
+    <string name="volume_feature_dialog_how_it_works_steps">• Lock your phone screen.\n• Use the volume buttons (+ or -).\n• The app will make the click sound!</string>
+    <string name="volume_feature_dialog_button">I GOT IT, LET\'S CLICK!</string>
 
 </resources>

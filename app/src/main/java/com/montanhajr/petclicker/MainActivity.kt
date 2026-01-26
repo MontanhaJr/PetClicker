@@ -1,32 +1,19 @@
 package com.montanhajr.petclicker
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media.VolumeProviderCompat
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -37,7 +24,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.montanhajr.petclicker.data.UserPreferences
-import com.montanhajr.petclicker.ui.theme.PetClickerTheme
+import com.montanhajr.petclicker.ui.PetClickerApp
 import com.montanhajr.petclicker.viewmodel.MainViewModel
 import com.montanhajr.petclicker.viewmodel.MainViewModelFactory
 import com.montanhajr.petclicker.viewmodel.SettingsViewModel
@@ -52,6 +39,9 @@ class MainActivity : ComponentActivity() {
     private var volumeProvider: VolumeProviderCompat? = null
     
     private var originalVolume: Int = -1
+    
+    // Flag para evitar que a feature seja desativada logo após assistir o AD
+    var justFinishedAd: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +62,10 @@ class MainActivity : ComponentActivity() {
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(userPreferences)
             )
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(userPreferences)
+            )
+
             val selectedSound by mainViewModel.selectedSound.collectAsState()
 
             LaunchedEffect(selectedSound) {
@@ -81,6 +75,7 @@ class MainActivity : ComponentActivity() {
             PetClickerApp(
                 userPreferences = userPreferences,
                 mainViewModel = mainViewModel,
+                settingsViewModel = settingsViewModel,
                 onPlaySound = { soundManager.playSound() },
                 showRewardedAd = { onRewardEarned ->
                     showRewardedAd(onRewardEarned)
@@ -117,17 +112,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Quando o app volta para o primeiro plano, usamos o volume LOCAL (nativo)
         mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // Quando o app vai para segundo plano ou a tela bloqueia, usamos o volume REMOTE
-        // Isso permite capturar os botões de volume sem mostrar a barra de volume do sistema
-        volumeProvider?.let {
-            mediaSession?.setPlaybackToRemote(it)
-        }
     }
 
     private fun adjustMediaVolume(reduce: Boolean) {
@@ -145,9 +130,6 @@ class MainActivity : ComponentActivity() {
             originalVolume = -1
         }
     }
-
-    // Removido o override de onKeyDown que interceptava os botões de volume,
-    // permitindo que o sistema os trate nativamente enquanto o app está aberto.
 
     override fun onDestroy() {
         super.onDestroy()
@@ -174,11 +156,13 @@ class MainActivity : ComponentActivity() {
                     adjustMediaVolume(reduce = true)
                 }
                 override fun onAdDismissedFullScreenContent() {
+                    justFinishedAd = true
                     adjustMediaVolume(reduce = false)
                     rewardedAd = null
                     loadRewardedAd()
                 }
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    justFinishedAd = true
                     adjustMediaVolume(reduce = false)
                     rewardedAd = null
                     loadRewardedAd()
@@ -212,11 +196,13 @@ class MainActivity : ComponentActivity() {
                     adjustMediaVolume(reduce = true)
                 }
                 override fun onAdDismissedFullScreenContent() {
+                    justFinishedAd = true
                     adjustMediaVolume(reduce = false)
                     interstitialAd = null
                     loadInterstitialAd()
                 }
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    justFinishedAd = true
                     adjustMediaVolume(reduce = false)
                     interstitialAd = null
                     loadInterstitialAd()
@@ -227,51 +213,14 @@ class MainActivity : ComponentActivity() {
             loadInterstitialAd()
         }
     }
-}
-
-@Composable
-fun PetClickerApp(
-    userPreferences: UserPreferences,
-    mainViewModel: MainViewModel,
-    onPlaySound: () -> Unit,
-    showRewardedAd: (() -> Unit) -> Unit,
-    showInterstitialAd: () -> Unit
-) {
-    val navController = rememberNavController()
-
-    val viewModel: SettingsViewModel = viewModel(
-        factory = SettingsViewModelFactory(userPreferences)
-    )
-
-    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
-    val selectedSound by mainViewModel.selectedSound.collectAsState()
-
-    PetClickerTheme(darkTheme = isDarkTheme) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            NavHost(
-                navController = navController,
-                startDestination = AppDestinations.MAIN_SCREEN,
-                modifier = Modifier.weight(1f)
-            ) {
-                composable(AppDestinations.MAIN_SCREEN) {
-                    MainScreen(
-                        navController = navController,
-                        onPlaySound = onPlaySound,
-                        showInterstitialAd = showInterstitialAd
-                    )
-                }
-                composable(AppDestinations.SETTINGS_SCREEN) {
-                    SettingsScreen(
-                        navController = navController,
-                        isDarkTheme = isDarkTheme,
-                        selectedSound = selectedSound,
-                        onThemeChange = { viewModel.updateTheme(it) },
-                        onSoundSelected = { viewModel.updateSound(it) },
-                        showRewardedAd = showRewardedAd
-                    )
-                }
+    
+    fun enableLockScreenSession(enabled: Boolean) {
+        if (enabled) {
+            volumeProvider?.let {
+                mediaSession?.setPlaybackToRemote(it)
             }
-            AdBanner(modifier = Modifier.navigationBarsPadding())
+        } else {
+            mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
         }
     }
 }

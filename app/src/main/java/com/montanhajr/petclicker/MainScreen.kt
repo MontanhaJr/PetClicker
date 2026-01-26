@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-private const val CLICKS_UNTIL_AD = 10
+private const val CLICKS_UNTIL_AD = 25
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

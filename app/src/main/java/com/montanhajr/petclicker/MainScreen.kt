@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -37,7 +35,6 @@ fun MainScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val imageColor = if (isPressed) Color.Red else Color.Gray
-    val scrollState = rememberScrollState()
 
     // Contador de cliques para o anúncio intersticial
     var clickCount by remember { mutableIntStateOf(0) }
@@ -65,7 +62,7 @@ fun MainScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(scrollState),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -75,7 +72,8 @@ fun MainScreen(
                 colorFilter = ColorFilter.tint(imageColor),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(600.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
                     .alpha(0.5f)
                     .clickable(
                         interactionSource = interactionSource,
@@ -100,11 +98,11 @@ fun MainScreen(
                     fontSize = 18.sp,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             } else {
                 // Espaço vazio para manter o layout estável
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }

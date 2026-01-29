@@ -4,17 +4,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.montanhajr.petclicker.data.UserPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val userPreferences: UserPreferences
 ) : ViewModel() {
 
-    private val _isDarkTheme = MutableStateFlow(false)
-    val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
+    // Indica se as preferências já foram carregadas do DataStore
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
+
+    val isDarkTheme: StateFlow<Boolean> = userPreferences.darkThemeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false // Valor inicial temporário
+        )
 
     private val _selectedSound = MutableStateFlow(com.montanhajr.petclicker.R.raw.clicker1)
     val selectedSound: StateFlow<Int> = _selectedSound.asStateFlow()
@@ -24,7 +35,10 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            userPreferences.darkThemeFlow.collectLatest { _isDarkTheme.value = it }
+            // Quando recebermos o primeiro valor real do DataStore, marcamos como pronto
+            userPreferences.darkThemeFlow.collectLatest {
+                _isReady.value = true
+            }
         }
         viewModelScope.launch {
             userPreferences.selectedSoundFlow.collectLatest { _selectedSound.value = it }
@@ -32,7 +46,6 @@ class SettingsViewModel(
     }
 
     fun updateTheme(isDark: Boolean) {
-        _isDarkTheme.value = isDark
         viewModelScope.launch {
             userPreferences.saveDarkTheme(isDark)
         }

@@ -8,10 +8,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media.VolumeProviderCompat
 import com.google.android.gms.ads.AdError
@@ -44,7 +46,19 @@ class MainActivity : ComponentActivity() {
     var justFinishedAd: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        val userPreferences = UserPreferences(this)
+        val settingsViewModel: SettingsViewModel by viewModels {
+            SettingsViewModelFactory(userPreferences)
+        }
+
+        // Mantém a SplashScreen até que o tema seja carregado do DataStore
+        splashScreen.setKeepOnScreenCondition {
+            !settingsViewModel.isReady.value
+        }
+
         enableEdgeToEdge()
 
         soundManager = SoundManager(this)
@@ -57,13 +71,8 @@ class MainActivity : ComponentActivity() {
         volumeControlStream = AudioManager.STREAM_MUSIC
 
         setContent {
-            val userPreferences = remember { UserPreferences(this) }
-            
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(userPreferences)
-            )
-            val settingsViewModel: SettingsViewModel = viewModel(
-                factory = SettingsViewModelFactory(userPreferences)
             )
 
             val selectedSound by mainViewModel.selectedSound.collectAsState()

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.montanhajr.petclicker.viewmodel.MainViewModel
 
 private const val CLICKS_UNTIL_AD = 25
 
@@ -28,6 +29,7 @@ private const val CLICKS_UNTIL_AD = 25
 @Composable
 fun MainScreen(
     navController: NavController,
+    mainViewModel: MainViewModel,
     modifier: Modifier = Modifier,
     onPlaySound: () -> Unit,
     showInterstitialAd: () -> Unit
@@ -36,8 +38,7 @@ fun MainScreen(
     val isPressed by interactionSource.collectIsPressedAsState()
     val imageColor = if (isPressed) Color.Red else Color.Gray
 
-    // Contador de cliques para o anúncio intersticial
-    var clickCount by remember { mutableIntStateOf(0) }
+    val clickCount by mainViewModel.clickCount.collectAsState()
 
     Scaffold(
         topBar = {
@@ -81,16 +82,14 @@ fun MainScreen(
                     ) {
                         onPlaySound()
                         
-                        // Lógica do contador de cliques
-                        clickCount++
-                        if (clickCount >= CLICKS_UNTIL_AD) {
+                        mainViewModel.incrementClickCount()
+                        if (mainViewModel.clickCount.value >= CLICKS_UNTIL_AD) {
                             showInterstitialAd()
-                            clickCount = 0
+                            mainViewModel.resetClickCount()
                         }
                     }
             )
 
-            // Mensagem de aviso sobre o anúncio (aparece quando faltam 5 ou menos cliques)
             val clicksRemaining = CLICKS_UNTIL_AD - clickCount
             if (clicksRemaining <= 5) {
                 Text(
@@ -101,7 +100,7 @@ fun MainScreen(
                     modifier = Modifier.padding(top = 16.dp)
                 )
             } else {
-                // Espaço vazio para manter o layout estável
+                // Mantém o espaço para o layout não "pular"
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }

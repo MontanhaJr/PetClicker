@@ -75,6 +75,7 @@ fun PetClickerApp(
                 composable(AppDestinations.MAIN_SCREEN) {
                     MainScreen(
                         navController = navController,
+                        mainViewModel = mainViewModel,
                         onPlaySound = onPlaySound,
                         showInterstitialAd = showInterstitialAd
                     )

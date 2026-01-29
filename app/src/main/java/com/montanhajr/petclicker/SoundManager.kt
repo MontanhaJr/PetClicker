@@ -12,11 +12,12 @@ class SoundManager(private val context: Context) {
 
     init {
         val attributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION) // Melhor para efeitos sonoros de UI/Cliques
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setFlags(AudioAttributes.FLAG_LOW_LATENCY) // Solicita baixa latência
             .build()
         soundPool = SoundPool.Builder()
-            .setMaxStreams(1)
+            .setMaxStreams(5) // Aumentar um pouco ajuda a evitar cortes se clicar rápido
             .setAudioAttributes(attributes)
             .build()
 
@@ -39,6 +40,7 @@ class SoundManager(private val context: Context) {
     fun playSound() {
         if (isLoaded) {
             soundId?.let {
+                // Tocar com prioridade máxima (1)
                 soundPool?.play(it, 1f, 1f, 1, 0, 1f)
             }
         }

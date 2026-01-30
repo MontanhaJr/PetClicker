@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.montanhajr.petclicker.viewmodel.MainViewModel
 
-private const val CLICKS_UNTIL_AD = 25
+private const val CLICKS_UNTIL_AD = 20
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

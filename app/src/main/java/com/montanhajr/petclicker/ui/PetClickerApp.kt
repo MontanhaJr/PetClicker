@@ -64,7 +64,7 @@ fun PetClickerApp(
     }
     
     LaunchedEffect(isLockScreenFeatureEnabled) {
-        (context as? MainActivity)?.enableLockScreenSession(isLockScreenFeatureEnabled)
+        (context as? MainActivity)?.enableLockScreenSession(isLockScreenFeatureEnabled, selectedSound)
     }
 
     PetClickerTheme(darkTheme = isDarkTheme) {

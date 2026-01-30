@@ -12,17 +12,17 @@ class SoundManager(private val context: Context) {
 
     init {
         val attributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION) // Melhor para efeitos sonoros de UI/Cliques
+            .setUsage(AudioAttributes.USAGE_GAME) // USAGE_GAME é excelente para baixa latência e segue o volume de mídia
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .setFlags(AudioAttributes.FLAG_LOW_LATENCY) // Solicita baixa latência
             .build()
+            
         soundPool = SoundPool.Builder()
-            .setMaxStreams(5) // Aumentar um pouco ajuda a evitar cortes se clicar rápido
+            .setMaxStreams(5)
             .setAudioAttributes(attributes)
             .build()
 
         soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0 && sampleId == soundId) {
+            if (status == 0) {
                 isLoaded = true
             }
         }
@@ -31,18 +31,15 @@ class SoundManager(private val context: Context) {
     fun loadSound(resId: Int) {
         if (currentSoundResId == resId) return
         
-        soundId?.let { soundPool?.unload(it) }
         isLoaded = false
         currentSoundResId = resId
         soundId = soundPool?.load(context, resId, 1)
     }
 
     fun playSound() {
-        if (isLoaded) {
-            soundId?.let {
-                // Tocar com prioridade máxima (1)
-                soundPool?.play(it, 1f, 1f, 1, 0, 1f)
-            }
+        // Se ainda não carregou ou falhou, tentamos carregar novamente se houver um ID
+        soundId?.let { id ->
+            soundPool?.play(id, 1f, 1f, 1, 0, 1f)
         }
     }
 

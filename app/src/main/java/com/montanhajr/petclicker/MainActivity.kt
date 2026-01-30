@@ -1,9 +1,9 @@
 package com.montanhajr.petclicker
 
+import android.content.Intent
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media.VolumeProviderCompat
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -38,14 +37,12 @@ class MainActivity : ComponentActivity() {
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
     private lateinit var soundManager: SoundManager
-    private var mediaSession: MediaSessionCompat? = null
-    private var volumeProvider: VolumeProviderCompat? = null
     private lateinit var billingManager: BillingManager
     
     private var originalVolume: Int = -1
     private var isLockScreenFeatureUserEnabled: Boolean = false
+    private var currentSoundResId: Int = -1
     
-    // Flag para evitar que a feature seja desativada logo após assistir o AD
     var justFinishedAd: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +66,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         soundManager = SoundManager(this)
-        setupMediaSession()
 
         MobileAds.initialize(this) {}
         loadRewardedAd()
@@ -84,9 +80,19 @@ class MainActivity : ComponentActivity() {
 
             val selectedSound by mainViewModel.selectedSound.collectAsState()
             val isPremium by settingsViewModel.isPremium.collectAsState()
+            val lockScreenEnabled by settingsViewModel.isLockScreenFeatureEnabled.collectAsState()
 
             LaunchedEffect(selectedSound) {
+                currentSoundResId = selectedSound
                 soundManager.loadSound(selectedSound)
+                // Se a função estiver ativa, atualizamos o som no serviço também
+                if (isLockScreenFeatureUserEnabled) {
+                    startSoundService(selectedSound)
+                }
+            }
+            
+            LaunchedEffect(lockScreenEnabled) {
+                enableLockScreenSession(lockScreenEnabled, currentSoundResId)
             }
 
             PetClickerApp(
@@ -107,60 +113,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun setupMediaSession() {
-        mediaSession = MediaSessionCompat(this, "PetClicker").apply {
-            volumeProvider = object : VolumeProviderCompat(
-                VOLUME_CONTROL_RELATIVE,
-                100,
-                50
-            ) {
-                override fun onAdjustVolume(direction: Int) {
-                    if (direction != 0) {
-                        soundManager.playSound()
-                        val state = PlaybackStateCompat.Builder()
-                            .setActions(PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PAUSE)
-                            .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
-                            .build()
-                        setPlaybackState(state)
-                    }
-                }
-            }
-            
-            val state = PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PAUSE)
-                .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
-                .build()
-            setPlaybackState(state)
-            isActive = true
-        }
-        // Inicialmente local para não interferir nos botões enquanto o app está aberto
-        mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
-    }
-
     override fun onResume() {
         super.onResume()
-        // Quando o app volta para o primeiro plano, restauramos o controle de volume normal do sistema
-        mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
         if (::billingManager.isInitialized) {
             billingManager.queryPurchases()
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        // Quando o app sai do primeiro plano (ou a tela bloqueia), 
-        // se a feature estiver habilitada, assumimos o controle dos botões
-        if (isLockScreenFeatureUserEnabled) {
-            volumeProvider?.let {
-                mediaSession?.setPlaybackToRemote(it)
-            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         soundManager.release()
-        mediaSession?.release()
     }
 
     private fun adjustMediaVolume(reduce: Boolean) {
@@ -240,12 +202,28 @@ class MainActivity : ComponentActivity() {
         } ?: run { loadInterstitialAd() }
     }
     
-    fun enableLockScreenSession(enabled: Boolean) {
+    fun enableLockScreenSession(enabled: Boolean, soundResId: Int) {
         isLockScreenFeatureUserEnabled = enabled
-        // Se desabilitar manualmente, voltamos ao local imediatamente
-        if (!enabled) {
-            mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
+        if (enabled) {
+            startSoundService(soundResId)
+        } else {
+            stopSoundService()
         }
-        // Se habilitar, não fazemos nada agora. O onPause cuidará de ativar o modo Remote.
+    }
+
+    private fun startSoundService(soundResId: Int) {
+        val intent = Intent(this, SoundService::class.java).apply {
+            putExtra(SoundService.EXTRA_SOUND_RES_ID, soundResId)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun stopSoundService() {
+        val intent = Intent(this, SoundService::class.java)
+        stopService(intent)
     }
 }

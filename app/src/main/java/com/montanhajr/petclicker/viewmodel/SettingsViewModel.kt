@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -24,7 +23,14 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false // Valor inicial temporário
+            initialValue = false
+        )
+
+    val isPremium: StateFlow<Boolean> = userPreferences.isPremiumFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
         )
 
     private val _selectedSound = MutableStateFlow(com.montanhajr.petclicker.R.raw.clicker1)
@@ -35,7 +41,6 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            // Quando recebermos o primeiro valor real do DataStore, marcamos como pronto
             userPreferences.darkThemeFlow.collectLatest {
                 _isReady.value = true
             }
@@ -60,5 +65,11 @@ class SettingsViewModel(
 
     fun enableLockScreenFeature(enabled: Boolean) {
         _isLockScreenFeatureEnabled.value = enabled
+    }
+
+    fun updatePremiumStatus(isPremium: Boolean) {
+        viewModelScope.launch {
+            userPreferences.savePremiumStatus(isPremium)
+        }
     }
 }

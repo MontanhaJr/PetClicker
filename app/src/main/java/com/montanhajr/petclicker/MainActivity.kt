@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media.VolumeProviderCompat
 import com.google.android.gms.ads.AdError
@@ -24,6 +25,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.montanhajr.petclicker.billing.BillingManager
 import com.montanhajr.petclicker.data.UserPreferences
 import com.montanhajr.petclicker.ui.PetClickerApp
 import com.montanhajr.petclicker.viewmodel.MainViewModel
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var soundManager: SoundManager
     private var mediaSession: MediaSessionCompat? = null
     private var volumeProvider: VolumeProviderCompat? = null
+    private lateinit var billingManager: BillingManager
     
     private var originalVolume: Int = -1
     private var isLockScreenFeatureUserEnabled: Boolean = false
@@ -53,6 +56,11 @@ class MainActivity : ComponentActivity() {
         val settingsViewModel: SettingsViewModel by viewModels {
             SettingsViewModelFactory(userPreferences)
         }
+
+        billingManager = BillingManager(this, lifecycleScope) { isPremium ->
+            settingsViewModel.updatePremiumStatus(isPremium)
+        }
+        billingManager.startConnection()
 
         splashScreen.setKeepOnScreenCondition {
             !settingsViewModel.isReady.value
@@ -75,6 +83,7 @@ class MainActivity : ComponentActivity() {
             )
 
             val selectedSound by mainViewModel.selectedSound.collectAsState()
+            val isPremium by settingsViewModel.isPremium.collectAsState()
 
             LaunchedEffect(selectedSound) {
                 soundManager.loadSound(selectedSound)
@@ -86,10 +95,13 @@ class MainActivity : ComponentActivity() {
                 settingsViewModel = settingsViewModel,
                 onPlaySound = { soundManager.playSound() },
                 showRewardedAd = { onRewardEarned ->
-                    showRewardedAd(onRewardEarned)
+                    if (isPremium) onRewardEarned() else showRewardedAd(onRewardEarned)
                 },
                 showInterstitialAd = {
-                    showInterstitialAd()
+                    if (!isPremium) showInterstitialAd()
+                },
+                onPurchasePremium = {
+                    billingManager.launchBillingFlow(this@MainActivity)
                 }
             )
         }
@@ -129,6 +141,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Quando o app volta para o primeiro plano, restauramos o controle de volume normal do sistema
         mediaSession?.setPlaybackToLocal(AudioManager.STREAM_MUSIC)
+        if (::billingManager.isInitialized) {
+            billingManager.queryPurchases()
+        }
     }
 
     override fun onPause() {

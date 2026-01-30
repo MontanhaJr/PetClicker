@@ -30,6 +30,7 @@ private const val CLICKS_UNTIL_AD = 25
 fun MainScreen(
     navController: NavController,
     mainViewModel: MainViewModel,
+    isPremium: Boolean,
     modifier: Modifier = Modifier,
     onPlaySound: () -> Unit,
     showInterstitialAd: () -> Unit
@@ -84,23 +85,28 @@ fun MainScreen(
                         
                         mainViewModel.incrementClickCount()
                         if (mainViewModel.clickCount.value >= CLICKS_UNTIL_AD) {
-                            showInterstitialAd()
+                            if (!isPremium) {
+                                showInterstitialAd()
+                            }
                             mainViewModel.resetClickCount()
                         }
                     }
             )
 
-            val clicksRemaining = CLICKS_UNTIL_AD - clickCount
-            if (clicksRemaining <= 5) {
-                Text(
-                    text = pluralStringResource(R.plurals.ad_announcement, clicksRemaining, clicksRemaining),
-                    fontSize = 18.sp,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
+            if (!isPremium) {
+                val clicksRemaining = CLICKS_UNTIL_AD - clickCount
+                if (clicksRemaining <= 5) {
+                    Text(
+                        text = pluralStringResource(R.plurals.ad_announcement, clicksRemaining, clicksRemaining),
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
             } else {
-                // Mantém o espaço para o layout não "pular"
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }

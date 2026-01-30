@@ -23,12 +23,16 @@
     <string name="lock_screen_feature_title">Activar sonido con pantalla bloqueada</string>
     <string name="features_title">Recursos extras</string>
     <string name="lock_screen_feature_activated_toast">¡Función activada! Ya puedes bloquear la pantalla.</string>
+    <string name="premium_title">Acceso Premium</string>
+    <string name="buy_premium_description">¡Elimina todos los anuncios para siempre!</string>
+    <string name="buy_premium_button">ELIMINAR ANUNCIOS</string>
+    <string name="premium_active">Premium Activo ✨</string>
 
     ## Volume Feature Info Dialog
     <string name="volume_feature_dialog_title">Clic con la Pantalla Bloqueada</string>
     <string name="volume_feature_dialog_description">¡Ahora, si bloqueas la pantalla, podrás seguir haciendo clic!</string>
     <string name="volume_feature_dialog_how_it_works_title">Cómo funciona:</string>
     <string name="volume_feature_dialog_how_it_works_steps">• Bloquea la pantalla del celular.\n• Usa los botones de volumen (+ o -).\n• ¡La aplicación emitirá el sonido del clic!</string>
-    <string name="volume_feature_dialog_button">¡LO ENTENDÍ, VAMOS A CLICAR!</string>
+    <string name="volume_feature_dialog_button">¡LO ENTENDÍ!</string>
 
 </resources>

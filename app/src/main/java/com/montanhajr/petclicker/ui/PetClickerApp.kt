@@ -31,11 +31,13 @@ fun PetClickerApp(
     settingsViewModel: SettingsViewModel,
     onPlaySound: () -> Unit,
     showRewardedAd: (() -> Unit) -> Unit,
-    showInterstitialAd: () -> Unit
+    showInterstitialAd: () -> Unit,
+    onPurchasePremium: () -> Unit
 ) {
     val navController = rememberNavController()
 
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+    val isPremium by settingsViewModel.isPremium.collectAsState()
     val selectedSound by mainViewModel.selectedSound.collectAsState()
     val isLockScreenFeatureEnabled by settingsViewModel.isLockScreenFeatureEnabled.collectAsState()
     
@@ -76,6 +78,7 @@ fun PetClickerApp(
                     MainScreen(
                         navController = navController,
                         mainViewModel = mainViewModel,
+                        isPremium = isPremium,
                         onPlaySound = onPlaySound,
                         showInterstitialAd = showInterstitialAd
                     )
@@ -86,17 +89,21 @@ fun PetClickerApp(
                         isDarkTheme = isDarkTheme,
                         selectedSound = selectedSound,
                         isLockScreenFeatureEnabled = isLockScreenFeatureEnabled,
+                        isPremium = isPremium,
                         onThemeChange = { settingsViewModel.updateTheme(it) },
                         onSoundSelected = { settingsViewModel.updateSound(it) },
                         onLockScreenFeatureToggle = {
                             settingsViewModel.enableLockScreenFeature(true)
                             showFeatureExplanation = true
                         },
-                        showRewardedAd = showRewardedAd
+                        showRewardedAd = showRewardedAd,
+                        onPurchasePremium = onPurchasePremium
                     )
                 }
             }
-            AdBanner(modifier = Modifier.navigationBarsPadding())
+            if (!isPremium) {
+                AdBanner(modifier = Modifier.navigationBarsPadding())
+            }
 
             if (showFeatureExplanation) {
                 VolumeFeatureInfoDialog(

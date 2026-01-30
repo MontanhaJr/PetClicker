@@ -106,6 +106,9 @@ dependencies {
     // AdMob
     implementation(libs.google.play.services.ads)
 
+    // Billing
+    implementation(libs.billing.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -16,6 +16,7 @@ val Context.dataStore by preferencesDataStore(name = PREFERENCES_NAME)
 object PreferencesKeys {
     val SELECTED_SOUND_NAME = stringPreferencesKey("selected_sound_name")
     val DARK_THEME = booleanPreferencesKey("dark_theme")
+    val IS_PREMIUM = booleanPreferencesKey("is_premium")
 }
 
 class UserPreferences(private val context: Context) {
@@ -31,6 +32,10 @@ class UserPreferences(private val context: Context) {
         prefs[PreferencesKeys.DARK_THEME] ?: false
     }
 
+    val isPremiumFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.IS_PREMIUM] ?: false
+    }
+
     suspend fun saveSelectedSound(soundResId: Int) {
         val soundName = context.resources.getResourceEntryName(soundResId)
         context.dataStore.edit { prefs ->
@@ -41,6 +46,12 @@ class UserPreferences(private val context: Context) {
     suspend fun saveDarkTheme(isDark: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.DARK_THEME] = isDark
+        }
+    }
+
+    suspend fun savePremiumStatus(isPremium: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.IS_PREMIUM] = isPremium
         }
     }
 }

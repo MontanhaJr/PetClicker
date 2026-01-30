@@ -35,10 +35,12 @@ fun SettingsScreen(
     isDarkTheme: Boolean,
     selectedSound: Int,
     isLockScreenFeatureEnabled: Boolean,
+    isPremium: Boolean,
     onThemeChange: (Boolean) -> Unit,
     onSoundSelected: (Int) -> Unit,
     onLockScreenFeatureToggle: () -> Unit,
-    showRewardedAd: (() -> Unit) -> Unit
+    showRewardedAd: (() -> Unit) -> Unit,
+    onPurchasePremium: () -> Unit
 ) {
     var isNavigationInProgress by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -79,6 +81,14 @@ fun SettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Seção Premium
+            PremiumCard(
+                isPremium = isPremium,
+                onPurchaseClick = onPurchasePremium
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             Text(stringResource(R.string.choose_sound_title), style = MaterialTheme.typography.titleMedium)
 
             val sounds = listOf(
@@ -88,16 +98,16 @@ fun SettingsScreen(
             )
 
             sounds.forEach { (title, icon, soundRes) ->
-                val isPremium = soundRes == R.raw.clicker3
+                val isAdRequired = soundRes == R.raw.clicker3 && !isPremium
                 
                 SoundOptionCard(
                     title = title,
                     isEnable = !isNavigationInProgress,
                     icon = icon,
                     isSelected = selectedSound == soundRes,
-                    isPremium = isPremium && selectedSound != soundRes
+                    isPremium = isAdRequired && selectedSound != soundRes
                 ) {
-                    if (isPremium && selectedSound != soundRes) {
+                    if (isAdRequired && selectedSound != soundRes) {
                         showRewardedAd {
                             onSoundSelected(soundRes)
                         }
@@ -111,16 +121,22 @@ fun SettingsScreen(
 
             Text(stringResource(R.string.features_title), style = MaterialTheme.typography.titleMedium)
             
+            val isLockScreenAdRequired = !isLockScreenFeatureEnabled && !isPremium
+
             SoundOptionCard(
                 title = stringResource(R.string.lock_screen_feature_title),
                 isEnable = !isNavigationInProgress && !isLockScreenFeatureEnabled,
                 icon = Icons.Filled.PhonelinkLock,
                 isSelected = isLockScreenFeatureEnabled,
-                isPremium = !isLockScreenFeatureEnabled
+                isPremium = isLockScreenAdRequired
             ) {
                 if (!isLockScreenFeatureEnabled) {
-                    showRewardedAd {
+                    if (isPremium) {
                         onLockScreenFeatureToggle()
+                    } else {
+                        showRewardedAd {
+                            onLockScreenFeatureToggle()
+                        }
                     }
                 }
             }
@@ -138,6 +154,60 @@ fun SettingsScreen(
                     checked = isDarkTheme,
                     onCheckedChange = onThemeChange
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun PremiumCard(
+    isPremium: Boolean,
+    onPurchaseClick: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isPremium) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.WorkspacePremium,
+                    contentDescription = null,
+                    tint = if (isPremium) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = stringResource(R.string.premium_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            
+            if (isPremium) {
+                Text(
+                    text = stringResource(R.string.premium_active),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.buy_premium_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Button(
+                    onClick = onPurchaseClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.buy_premium_button))
+                }
             }
         }
     }
